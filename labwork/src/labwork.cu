@@ -33,12 +33,14 @@ int main(int argc, char **argv) {
     timer.start();
     switch (lwNum) {
         case 1:
+			timer.start();
             labwork.labwork1_CPU();
             labwork.saveOutputImage("labwork2-cpu-out.jpg");
             printf("labwork 1 CPU ellapsed %.1fms\n", lwNum, timer.getElapsedTimeInMilliSec());
             timer.start();
             labwork.labwork1_OpenMP();
             labwork.saveOutputImage("labwork2-openmp-out.jpg");
+			printf("labwork 1 GPU ellapsed %.1fms\n", lwNum, timer.getElapsedTimeInMilliSec());
             break;
         case 2:
             labwork.labwork2_GPU();
@@ -103,7 +105,17 @@ void Labwork::labwork1_CPU() {
 }
 
 void Labwork::labwork1_OpenMP() {
-
+int pixelCount = inputImage->width * inputImage->height;
+    outputImage = static_cast<char *>(malloc(pixelCount * 3));
+	#pragma omp parallel for schedule(static,1) num_threads(8)
+    for (int j = 0; j < 100; j++) {		// let's do it 100 times, otherwise it's too fast!
+        for (int i = 0; i < pixelCount; i++) {
+            outputImage[i * 3] = (char) (((int) inputImage->buffer[i * 3] + (int) inputImage->buffer[i * 3 + 1] +
+                                          (int) inputImage->buffer[i * 3 + 2]) / 3);
+            outputImage[i * 3 + 1] = outputImage[i * 3];
+            outputImage[i * 3 + 2] = outputImage[i * 3];
+        }
+    }
 }
 
 int getSPcores(cudaDeviceProp devProp) {
@@ -133,11 +145,47 @@ int getSPcores(cudaDeviceProp devProp) {
 }
 
 void Labwork::labwork2_GPU() {
-    
+    int numberOfDevices = 0;
+	cudaGetDeviceCount(&numberOfDevices);
+  printf("Number of devices: %d\n", numberOfDevices); 
+  for(int i=0; i<numberOfDevices; i++) { 
+      cudaDeviceProp prop; 
+      cudaGetDeviceProperties(&prop, i); 
+      printf("Device %d\n", i); 
+      printf("Name: %s\n", prop.name);
+	  printf("Cores %d\n",getSPcores(prop)); 
+      printf("Clockrate: %d\n", prop.clockRate);
+	  }
 }
 
+__global__ void rgb2grayCUDA(uchar3 *input, uchar3 *output) {
+int tid = threadIdx.x + blockIdx.x * blockDim.x;
+output[tid].x = (input[tid].x + input[tid].y +
+input[tid].z) / 3;
+output[tid].z = output[tid].y = output[tid].x;
+}
+
+
 void Labwork::labwork3_GPU() {
-   
+//  number of pixels 
+int pixelCount = inputImage->width * inputImage->height;
+
+uchar3 *devInput;
+uchar3 *devGray;
+int regionSize = 64;
+int numBlock = pixelCount / regionSize;
+
+ cudaMalloc(&devInput, pixelCount * sizeof(uchar3));
+ cudaMalloc(&devGray, pixelCount * sizeof(float));
+ //copy from host to device
+ cudaMemcpy(devInput,inputImage->buffer,pixelCount * sizeof(uchar3),cudaMemcpyHostToDevice);
+ //launch the kernel
+ rgb2grayCUDA<<<numBlock, regionSize>>>(devInput, devGray);
+ outputImage = (char*) malloc(pixelCount * sizeof(char) * 3);
+ cudaMemcpy(outputImage, devGray,pixelCount * sizeof(float),cudaMemcpyDeviceToHost);
+ //free memory
+ cudaFree(devInput);
+ cudaFree(devGray);
 }
 
 void Labwork::labwork4_GPU() {
