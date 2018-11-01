@@ -160,6 +160,7 @@ void Labwork::labwork2_GPU() {
 	  }
 }
 
+
 __global__ void rgb2grayCUDA(uchar3 *input, uchar3 *output) {
 int tid = threadIdx.x + blockIdx.x * blockDim.x;
 output[tid].x = (input[tid].x + input[tid].y +
@@ -167,11 +168,9 @@ input[tid].z) / 3;
 output[tid].z = output[tid].y = output[tid].x;
 }
 
-
 void Labwork::labwork3_GPU() {
 //  number of pixels 
 int pixelCount = inputImage->width * inputImage->height;
-
 uchar3 *devInput;
 uchar3 *devGray;
 int regionSize = 1024;
@@ -189,24 +188,33 @@ int numBlock = pixelCount / regionSize;
  cudaFree(devInput);
  cudaFree(devGray);
 }
+__global__ void rgb2grayCUDA2D(uchar3 *input, uchar3 *output,int width, int height) {
+int tidX = threadIdx.x + blockIdx.x * blockDim.x;
+if(tidX >= width) return;
+int  tidY = threadIdx.y + blockIdx.y * blockDim.y;
+if(tidY >= height) return;
+int tid =  (tidX + tidY) * width;
+output[tid].x = (input[tid].x + input[tid].y +input[tid].z) / 3;
+output[tid].z = output[tid].y = output[tid].x;
+}
 
 void Labwork::labwork4_GPU() {
-   //  number of pixels 
+//  number of pixels 
 int pixelCount = inputImage->width * inputImage->height;
 uchar3 *devInput;
 uchar3 *devGray;
-dim3 regionSize = dim3(inputImage->width/64, inputImage->height/64,1);
-dim3 numBlock = dim3(64, 64,1);
+dim3 regionSize = dim3((inputImage->width - 7)/8, (inputImage->height - 7)/8);
+dim3 numBlock = dim3(8, 8);
 //grayscale<<<gridSize, blockSize>>>(devInput, devOutput);
 
  cudaMalloc(&devInput, pixelCount * sizeof(uchar3));
- cudaMalloc(&devGray, pixelCount * sizeof(float));
+ cudaMalloc(&devGray, pixelCount * sizeof(uchar3));
  //copy from host to device
  cudaMemcpy(devInput,inputImage->buffer,pixelCount * sizeof(uchar3),cudaMemcpyHostToDevice);
  //launch the kernel
- rgb2grayCUDA<<<numBlock, regionSize>>>(devInput, devGray);
+ rgb2grayCUDA2D<<<numBlock, regionSize>>>(devInput, devGray,inputImage->width,inputImage->height);
  outputImage = (char*) malloc(pixelCount * sizeof(char) * 3);
- cudaMemcpy(outputImage, devGray,pixelCount * sizeof(float),cudaMemcpyDeviceToHost);
+ cudaMemcpy(outputImage, devGray,pixelCount * sizeof(uchar3),cudaMemcpyDeviceToHost);
  //free memory
  cudaFree(devInput);
  cudaFree(devGray);
