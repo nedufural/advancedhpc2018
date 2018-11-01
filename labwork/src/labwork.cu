@@ -203,7 +203,7 @@ void Labwork::labwork4_GPU() {
 int pixelCount = inputImage->width * inputImage->height;
 uchar3 *devInput;
 uchar3 *devGray;
-dim3 regionSize = dim3((inputImage->width - 7)/8, (inputImage->height - 7)/8);
+dim3 regionSize = dim3((inputImage->width + 7)/8, (inputImage->height + 7)/8);
 dim3 numBlock = dim3(8, 8);
 //grayscale<<<gridSize, blockSize>>>(devInput, devOutput);
 
