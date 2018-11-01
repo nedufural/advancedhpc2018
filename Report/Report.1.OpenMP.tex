@@ -1,0 +1,78 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{tabularx}
+\usepackage{amsmath}  
+\usepackage{graphicx}
+\usepackage[margin=1in,letterpaper]{geometry} 
+\usepackage{cite}
+\usepackage[final]{hyperref}
+\usepackage{listings}
+
+\lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},   
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+
+\begin{document}
+
+\title{Report 1}
+\author{Agwu Chinedu}
+\date{30th October 2018}
+\maketitle
+
+
+\section{Task}
+\begin{itemize}
+\item How you implement the conversion
+\item What’s the speedup?
+\item Try experimenting with different OpenMP parameters
+	\begin{itemize}
+	\item Team size
+    \item  static / dynamic
+	\end{itemize}
+\end{itemize}
+
+
+\section{Result}
+\subsubsection{Static}
+\begin{itemize}
+\item labwork 1 CPU ellapsed 3431.7ms
+\item labwork 1 GPU ellapsed 884.5ms
+\item labwork 1 ellapsed 884.5ms
+\item CPU ellasped time is nearly 4 times higher than the GPU
+\end{itemize}
+
+\subsubsection{Dynamic}
+
+\begin{itemize}
+\item labwork 1 CPU ellapsed 3507.3ms
+\item labwork 1 GPU ellapsed 917.4ms
+\item labwork 1 ellapsed 917.4ms
+\item Similarly the CPU ellasped time is nearly 4 times(3.88 times approx.) higher than the GPU
+\end{itemize}
+
+
+\subsubsection{Team Size of 4}
+\begin{itemize}
+\item labwork 1 CPU ellapsed 3363.3ms
+\item labwork 1 GPU ellapsed 3396.0ms
+\item labwork 1 ellapsed 3396.1ms
+\item CPU ellasped time is nearly the same as the GPU
+\end{itemize}
+
+
+\end{document}
