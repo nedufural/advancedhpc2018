@@ -1,0 +1,57 @@
+\documentclass[letterpaper,12pt]{article}
+\usepackage{tabularx}
+\usepackage{amsmath}  
+\usepackage{graphicx}
+\usepackage[margin=1in,letterpaper]{geometry} 
+\usepackage{cite}
+\usepackage[final]{hyperref}
+\usepackage{listings}
+
+\lstdefinestyle{CStyle}{
+    backgroundcolor=\color{backgroundColour},   
+    commentstyle=\color{mGreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{mGray},
+    stringstyle=\color{mPurple},
+    basicstyle=\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    language=C
+}
+
+\begin{document}
+
+\title{Report 1}
+\author{Agwu Chinedu}
+\date{28th August 2018}
+\maketitle
+
+
+\section{Task}
+Explain how you implement the labwork \\
+What’s the speedup?\\
+Try experimenting with different block size values\\
+
+
+\section{Result}
+1. Host feeds device with data\\
+2. Host asks device to process data\\
+3. Device processes data in parallel\\
+4. Device returns result\\
+\paragraph{}
+The lapsed time is 133.4ms making it much faster than CPU computing time.
+\paragraph{}
+The lager the block size the fewer the number of blocks we have. There by enhancing the throughput of the GPU.
+
+
+
+
+\end{document}
