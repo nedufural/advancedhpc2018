@@ -260,19 +260,12 @@ void Labwork::labwork5_CPU() {
         }
     }
 }
-__global__ void BlurScale(uchar3 *input, uchar3 *output,int width, int height) {
+__global__ void BlurScale(uchar3 *input, uchar3 *output,int *weight,int width, int height) {
 int tidX = threadIdx.x + blockIdx.x * blockDim.x;
 if(tidX >= width) return;
 int  tidY = threadIdx.y + blockIdx.y * blockDim.y;
 if(tidY >= height) return;
-int tid =  tidX + tidY * width;
-int weight[] = { 0, 0, 1, 2, 1, 0, 0,  
-                     0, 3, 13, 22, 13, 3, 0,  
-                     1, 13, 59, 97, 59, 13, 1,  
-                     2, 22, 97, 159, 97, 22, 2,  
-                     1, 13, 59, 97, 59, 13, 1,  
-                     0, 3, 13, 22, 13, 3, 0,
-                     0, 0, 1, 2, 1, 0, 0 };
+int tid =  (tidX + tidY )* width;
 	
             int sum = 0;
             int c = 0;
@@ -299,6 +292,13 @@ int weight[] = { 0, 0, 1, 2, 1, 0, 0,
 					
 }
 void Labwork::labwork5_GPU() {
+	int weight[] = { 0, 0, 1, 2, 1, 0, 0,  
+                     0, 3, 13, 22, 13, 3, 0,  
+                     1, 13, 59, 97, 59, 13, 1,  
+                     2, 22, 97, 159, 97, 22, 2,  
+                     1, 13, 59, 97, 59, 13, 1,  
+                     0, 3, 13, 22, 13, 3, 0,
+                     0, 0, 1, 2, 1, 0, 0 };
 //  number of pixels 
 int pixelCount = inputImage->width * inputImage->height;
 uchar3 *devInput;
@@ -312,7 +312,7 @@ dim3 numBlock = dim3(32,32);
  //copy from host to device
  cudaMemcpy(devInput,inputImage->buffer,pixelCount * 3,cudaMemcpyHostToDevice);
  //launch the kernel
- BlurScale<<< regionSize,numBlock>>>(devInput, devGray,inputImage->width,inputImage->height);
+ BlurScale<<< regionSize,numBlock>>>(devInput, devGray,weight,inputImage->width,inputImage->height);
  cudaMemcpy(outputImage, devGray,pixelCount * 3,cudaMemcpyDeviceToHost);
  //free memory
  cudaFree(devInput);
