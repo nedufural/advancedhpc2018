@@ -61,7 +61,7 @@ int main(int argc, char **argv) {
 			timer.start();
             labwork.labwork5_GPU();
             labwork.saveOutputImage("labwork5-gpu-out.jpg");
-			printf("labwork 5 CPU ellapsed %.1fms\n", lwNum, timer.getElapsedTimeInMilliSec());
+			printf("labwork 5 GPU ellapsed %.1fms\n", lwNum, timer.getElapsedTimeInMilliSec());
 			
             break;
         case 6:
@@ -261,62 +261,63 @@ void Labwork::labwork5_CPU() {
     }
 }
 __global__ void BlurScale(uchar3 *input, uchar3 *output,int *weight,int width, int height) {
-int tidX = threadIdx.x + blockIdx.x * blockDim.x;
-if(tidX >= width) return;
-int  tidY = threadIdx.y + blockIdx.y * blockDim.y;
-if(tidY >= height) return;
-int tid =  (tidX + tidY )* width;
-	
+	int tidX = threadIdx.x + blockIdx.x * blockDim.x;
+	if(tidX >= width) return;
+	int  tidY = threadIdx.y + blockIdx.y * blockDim.y;
+	if(tidY >= height) return;
+	int tid = tidX + tidY * width;
             int sum = 0;
             int c = 0;
             for (int y = -3; y <= 3; y++) {
                 for (int x = -3; x <= 3; x++) {
                     int i = tidX + x;
                     int j = tidY + y;
-                    if (i < 0) continue;
-                    if (i >= width) continue;
-                    if (j < 0) continue;
-                    if (j >= height) continue;
+						if (i < 0) continue;
+						if (i >= width) continue;
+						if (j < 0) continue;
+						if (j >= height) continue;
                     
-                    unsigned char gray = (input[tid].x + input[tid].y +input[tid].z) / 3;
-                    int coefficient = weight[(y+3) * 7 + x + 3];
-                    sum +=  gray * coefficient;
-                    c += coefficient;
+							unsigned char gray = (input[tid].x + input[tid].y +input[tid].z) / 3;
+							int coefficient = weight[(y+3) * 7 + x + 3];
+							sum =sum + gray * coefficient;
+							c += coefficient;
                 }
             }
             sum /= c;
-         
-			output[tid].z = output[tid].y = output[tid].x = sum;
-        
-    
-					
+            output[tid].z = output[tid].y = output[tid].x = sum;				
 }
 void Labwork::labwork5_GPU() {
 	int weight[] = { 0, 0, 1, 2, 1, 0, 0,  
-                     0, 3, 13, 22, 13, 3, 0,  
-                     1, 13, 59, 97, 59, 13, 1,  
-                     2, 22, 97, 159, 97, 22, 2,  
-                     1, 13, 59, 97, 59, 13, 1,  
-                     0, 3, 13, 22, 13, 3, 0,
-                     0, 0, 1, 2, 1, 0, 0 };
-//  number of pixels 
-int pixelCount = inputImage->width * inputImage->height;
-uchar3 *devInput;
-uchar3 *devGray;
-dim3 regionSize = dim3((inputImage->width + 31)/32, (inputImage->height + 31)/32);
-dim3 numBlock = dim3(32,32);
-//grayscale<<<gridSize, blockSize>>>(devInput, devOutput);
- outputImage = (char*) malloc(pixelCount * 3);
- cudaMalloc(&devInput, pixelCount * 3);
- cudaMalloc(&devGray, pixelCount * 3);
- //copy from host to device
- cudaMemcpy(devInput,inputImage->buffer,pixelCount * 3,cudaMemcpyHostToDevice);
- //launch the kernel
- BlurScale<<< regionSize,numBlock>>>(devInput, devGray,weight,inputImage->width,inputImage->height);
- cudaMemcpy(outputImage, devGray,pixelCount * 3,cudaMemcpyDeviceToHost);
- //free memory
- cudaFree(devInput);
- cudaFree(devGray);
+					 0, 3, 13, 22, 13, 3, 0,  
+					 1, 13, 59, 97, 59, 13, 1,  
+					 2, 22, 97, 159, 97, 22, 2,  
+					 1, 13, 59, 97, 59, 13, 1,  
+					 0, 3, 13, 22, 13, 3, 0,
+					 0, 0, 1, 2, 1, 0, 0 };
+	//  number of pixels 
+	int pixelCount = inputImage->width * inputImage->height;
+	uchar3 *devInput;
+	uchar3 *devGray;
+	 outputImage = static_cast<char *>(malloc(pixelCount * 3));
+	dim3 regionSize = dim3((inputImage->width + 31)/32, (inputImage->height + 31)/32);
+	dim3 numBlock = dim3(32,32);
+	
+	
+	 // allocate memory to device input and output
+	 cudaMalloc(&devInput, pixelCount * sizeof(uchar3));
+	 cudaMalloc(&devGray, pixelCount * sizeof(uchar3) );
+	 
+	 //copy from host to device
+	 cudaMemcpy(devInput,inputImage->buffer,pixelCount * sizeof(uchar3),cudaMemcpyHostToDevice);
+	 
+	 //launch the kernel
+	 BlurScale<<< regionSize,numBlock>>>(devInput, devGray,weight,inputImage->width,inputImage->height);
+	 outputImage = (char*) malloc(pixelCount * sizeof(char) * 3);
+	 cudaMemcpy(outputImage, devGray,pixelCount * sizeof(uchar3) ,cudaMemcpyDeviceToHost);
+	 
+	 //free memory
+	 cudaFree(devInput);
+	 cudaFree(devGray);
 }
 
 void Labwork::labwork6_GPU() {
